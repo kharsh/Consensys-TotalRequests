@@ -7,8 +7,8 @@ const { elementLocated } = require('selenium-webdriver/lib/until');
 class LoginPage extends BasePage {
   
  getTotalRequests(email, password) {
-  
-  var totalRequests;
+  let promise = new Promise(function(resolve, reject) {
+    var totalRequests;
   driver.wait(until.elementLocated(By.id('email')), 5 * 1000).then(el => {
       el.sendKeys(email);
   });
@@ -61,16 +61,15 @@ class LoginPage extends BasePage {
               elements[0].getText().then(function(text) {
                 totalRequests = totalRequests.replace(text,'')
                 console.log("Total requests second "+totalRequests)
+                resolve(totalRequests)
               })
-                
                 return elements[0].click()
             })
           })
         })
       })
   });
-
-  
+  })
   return promise;
  }
 }

@@ -15,6 +15,8 @@ describe('This is my Dashboard', function() {
     loginpage.go_to_url(baseUrl);
     loginpage.getTotalRequests('hkproject05@gmail.com', 'Atharva#179').then(function(requests) {
       console.log("Final total requests "+requests);
+    }).catch(err =>{
+      console.log(err)
     })
     
   })

@@ -1,11 +1,30 @@
 var assert = require('assert')
 var chai = require('chai')
 var chaiHttp = require('chai-http')
+var expect = chai.expect;
+var assertChai = chai.assert;
 var axios = require('axios')
+const loginpage = require('../pageObjects/loginpage')
+const dashboard = require('../pageObjects/dashboardpage');
+const { doesNotMatch } = require('assert')
+
 
 describe('eth_getBlockByNumber', function(){
   var latestBlockNumber = 0;
-    it('should return the latest block', async function() {
+  var totalRequests;
+  var baseUrl = 'https://infura.io/login';
+
+  before(async function() {
+    loginpage.go_to_url(baseUrl);
+    return loginpage.getTotalRequests('hkproject05@gmail.com', 'Atharva#179').then(function(requests) {
+      totalRequests = requests;
+      console.log("Final total requests "+totalRequests)
+      return totalRequests;
+    })
+    
+  })
+  
+  it('should return the latest block', async function() {
       var response = await axios({
               method: 'post',
               url: 'https://ropsten.infura.io/v3/4cc02ca8b4fd4eb19955757564ffc15f',
@@ -16,11 +35,10 @@ describe('eth_getBlockByNumber', function(){
                 params:["latest", true]
               }
           })
-
           hex = response.data.result.number;
-          console.log("Latest Block original Hex" +hex)
           latestBlockNumber = parseInt(hex, 16)
-          console.log("Final  "+ latestBlockNumber);
+          assertChai.isNumber(latestBlockNumber, "Got the latest block number")
+          console.log("Latest block number", latestBlockNumber)
     });
 
     it('Make 1000 requests', async function() {
@@ -53,7 +71,15 @@ describe('eth_getBlockByNumber', function(){
 
       await axios(requests[0]).then(response => {
         console.log(response)
-      }).catch(errors => {
+      }).then(async function() {
+        loginpage.go_to_url(baseUrl);
+          return loginpage.getTotalRequests('hkproject05@gmail.com', 'Atharva#179').then(function(requests) {
+          totalRequests = requests;
+          console.log("Final total requests "+totalRequests)
+          return totalRequests;
+        })
+      })
+      .catch(errors => {
         console.log("Errors - "+errors)
       })
 
