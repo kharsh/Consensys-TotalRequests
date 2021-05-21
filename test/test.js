@@ -1,87 +1,36 @@
 var assert = require('assert')
 var chai = require('chai')
-var chaiHttp = require('chai-http')
 var expect = chai.expect;
 var assertChai = chai.assert;
-var axios = require('axios')
-const loginpage = require('../pageObjects/loginpage')
-const dashboard = require('../pageObjects/dashboardpage');
-const { doesNotMatch } = require('assert')
 
+const httpHelper = require('./helpers/httpHelper')
+const data = require('./helpers/data.json')
+const dashboardPage = require('./ui/dashboard')
 
 describe('eth_getBlockByNumber', function(){
-  var latestBlockNumber = 0;
-  var totalRequests;
-  var baseUrl = 'https://infura.io/login';
-
+  var latestBlockNumber;
+  var totalRequestsSeenOnDashboardUI;
+  
   before(async function() {
-    loginpage.go_to_url(baseUrl);
-    return loginpage.getTotalRequests('hkproject05@gmail.com', 'Atharva#179').then(function(requests) {
-      totalRequests = requests;
-      console.log("Final total requests "+totalRequests)
-      return totalRequests;
-    })
-    
+    totalRequestsSeenOnDashboardUI = await dashboardPage.readTotalNumberOfRequests()
+    console.log("Dashboard requests " +totalRequestsSeenOnDashboardUI)
   })
   
-  it('should return the latest block', async function() {
-      var response = await axios({
-              method: 'post',
-              url: 'https://ropsten.infura.io/v3/4cc02ca8b4fd4eb19955757564ffc15f',
-              data: {
-                id: 0,
-                jsonrpc: '2.0',
-                method: "eth_getBlockByNumber",
-                params:["latest", true]
-              }
-          })
-          hex = response.data.result.number;
-          latestBlockNumber = parseInt(hex, 16)
-          assertChai.isNumber(latestBlockNumber, "Got the latest block number")
-          console.log("Latest block number", latestBlockNumber)
-    });
+  it('should return the latest eth block by eth_getBlockByNumber POST request', async function() {
+      latestBlockNumber = await httpHelper.getLatestEthBlockByNumber()
+      assertChai.isNumber(latestBlockNumber, "Received a valid latest Eth block using eth_getBlockByNumber POST request")
+      console.log("Latest block number", latestBlockNumber)
+  });
 
-    it('Make 1000 requests', async function() {
-      latestBlockNumberHex = latestBlockNumber.toString(16);
-      latestBlockNumberHex = "0x"+latestBlockNumberHex
-      console.log("Latest Block number Hex found" +latestBlockNumberHex)
-      var requests = []
-      var config = {
-        method: 'post',
-        url: 'https://ropsten.infura.io/v3/4cc02ca8b4fd4eb19955757564ffc15f',
-        data: {
-          id: 0,
-          jsonrpc: '2.0',
-          method: "eth_getBlockByNumber",
-          params:[]
-        }
-      };
-      var promises = [];
-      blockNumber = latestBlockNumber
-      while(latestBlockNumber > (blockNumber - 2)) {
-        var obj = JSON.parse(JSON.stringify(config))
-        latestBlockNumberHex = latestBlockNumber.toString(16);
-        latestBlockNumberHex = "0x"+latestBlockNumberHex
-        obj.data.params.push(latestBlockNumberHex)
-        obj.data.params.push(true)
-        requests.push(obj)
-        latestBlockNumber = latestBlockNumber - 1;
-        promises.push(obj)
-      }
+  it('Make 1000 requests', async function() {
+    await httpHelper.getNumberOfMostRecentEthBlocks(latestBlockNumber)
+  });
 
-      await axios(requests[0]).then(response => {
-        console.log(response)
-      }).then(async function() {
-        loginpage.go_to_url(baseUrl);
-          return loginpage.getTotalRequests('hkproject05@gmail.com', 'Atharva#179').then(function(requests) {
-          totalRequests = requests;
-          console.log("Final total requests "+totalRequests)
-          return totalRequests;
-        })
-      })
-      .catch(errors => {
-        console.log("Errors - "+errors)
-      })
-
-});
+    it("Make sure total requests match", async function() {
+      var latestNumberOfRequestsonDashBoard = await dashboardPage.readTotalNumberOfRequests()
+      //**data.number_of_block_requests +1** count one request made to get latest block
+      assert.strictEqual(parseInt(latestNumberOfRequestsonDashBoard), (parseInt(totalRequestsSeenOnDashboardUI) + data.number_of_block_requests +1), "Numbers do match")
+      
+      console.log("Latest number of Dashboard requests on UI" +latestNumberOfRequestsonDashBoard)
+    })
 });

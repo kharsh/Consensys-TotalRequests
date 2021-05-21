@@ -1,0 +1,12 @@
+
+{
+    "hex": 16,
+    "number_of_block_requests" : 2,
+    "baseUrl" : "https://infura.io/login",
+    "email": "hkproject05@gmail.com",
+    "password": "Atharva#179",
+    "ropstenUrl": "https://ropsten.infura.io/v3/",
+    "projectId_Eth_getBlockByNumber": "4cc02ca8b4fd4eb19955757564ffc15f",
+    "projectId_rateLimit":"4aa1d15a8d1b46fdb11d2159b8d27769"
+}
+
