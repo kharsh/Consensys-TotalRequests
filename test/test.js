@@ -7,7 +7,7 @@ const httpHelper = require('./helpers/httpHelper')
 const data = require('./helpers/data.json')
 const dashboardPage = require('./ui/dashboard')
 
-describe('eth_getBlockByNumber', function(){
+describe('JSON-RPC method eth_getBlockByNumber see Total requests on Infura Dashboard ', function(){
   var latestBlockNumber;
   var totalRequestsSeenOnDashboardUI;
   
@@ -22,15 +22,27 @@ describe('eth_getBlockByNumber', function(){
       console.log("Latest block number", latestBlockNumber)
   });
 
-  it('Make 1000 requests', async function() {
-    await httpHelper.getNumberOfMostRecentEthBlocks(latestBlockNumber)
+  it('Retrieve most recent 1000 blocks', async function() {
+    responses = await httpHelper.getNumberOfMostRecentEthBlocks(latestBlockNumber)
+    /**
+     * validate each response we can certainly add more asserts for each response received
+     */
+    
+    responses.forEach(response => {
+      assertChai.isNumber(parseInt(response.result.number), "Response has Eth block number")
+      assertChai.isNotEmpty(response.result.nonce, "Nonce value is not empty")
+      assertChai.isNotEmpty(response.result.size, "Size is not empty")
+      assertChai.equal(response.jsonrpc, '2.0', "response has correct json rpc version")
+      assertChai.isNumber(response.id, "response id is a number")
+    });
   });
 
-    it("Make sure total requests match", async function() {
-      var latestNumberOfRequestsonDashBoard = await dashboardPage.readTotalNumberOfRequests()
-      //**data.number_of_block_requests +1** count one request made to get latest block
-      assert.strictEqual(parseInt(latestNumberOfRequestsonDashBoard), (parseInt(totalRequestsSeenOnDashboardUI) + data.number_of_block_requests +1), "Numbers do match")
-      
-      console.log("Latest number of Dashboard requests on UI" +latestNumberOfRequestsonDashBoard)
-    })
+  it("Total number of requests displayed on dashboard are correct", async function() {
+    var latestNumberOfRequestsonDashBoard = await dashboardPage.readTotalNumberOfRequests()
+    //data.number_of_block_requests +1** count one request made to get latest block
+    
+    assert.strictEqual(parseInt(latestNumberOfRequestsonDashBoard.replace(',','')), (parseInt(totalRequestsSeenOnDashboardUI.replace(',','')) + data.number_of_block_requests +1), "Numbers do match")
+    //Show on the terminal log the final request number 
+    
+  })
 });
